@@ -3,15 +3,15 @@
 # Bin dir the end user adds to their PATH
 %global _ux_bindir /usr/bin
 # Log directory
-%global _app_logdir /var/log/puppet/puppetdb
+%global _app_logdir /var/log/puppetdb
 # Run directory, PID files go here
-%global _app_rundir /var/run/puppet/puppetdb
+%global _app_rundir /var/run/puppetdb
 
 # Puppet Installation Layout
 %global _sysconfdir /etc
 %global _app_prefix /usr/share/puppetdb
 %global _app_data /var/lib/puppetdb
-%global _projconfdir %{_sysconfdir}/puppet/puppetdb
+%global _projconfdir %{_sysconfdir}/puppetdb
 %global _symbindir /dev/null
 
 %global rubylibdir        /usr/share/ruby/vendor_ruby
@@ -19,10 +19,12 @@
 # Use the alternate locations for things.
 %global _prefix          /usr/share/puppetdb
 %global _rundir          /var/run
+%global _unitdir         /usr/lib/systemd/system
+%global _tmpfilesdir     /usr/lib/tmpfiles.d
 
 Name:             puppetdb
 Version:          5.2.6
-Release:          1%{?dist}
+Release:          2%{?dist}
 
 Summary:          Puppet Labs - puppetdb
 Vendor:           Puppet Labs <info@puppetlabs.com>
@@ -32,7 +34,7 @@ License:          ASL 2.0
 URL:              http://puppetlabs.com
 Source0:          http://downloads.puppetlabs.com/%{name}/%{name}-%{version}.tar.gz
 Source1:          http://downloads.puppetlabs.com/%{name}/%{name}-%{version}.tar.gz.asc
-Patch0:           nosymlink.patch
+Patch0:           0001-comply-with-redhat-file-system-layout.patch
 
 Group:            System Environment/Base
 BuildArch:        noarch
@@ -81,6 +83,8 @@ Termini for puppetdb
 %install
 
 rm -rf $RPM_BUILD_ROOT
+
+env EZ_VERBOSE=1 DESTDIR=%{buildroot} prefix=%{_prefix} app_prefix=%{_app_prefix} app_data=%{_app_data} confdir=%{_sysconfdir} projconfdir=%{_projconfdir} bindir=%{_app_bindir} uxbindir=%{_ux_bindir} symbindir=%{_sym_bindir} rundir=%{_app_rundir} app_logdir=%{_app_logdir} rubylibdir=%{rubylibdir} bash install.sh install_redhat
 
 env EZ_VERBOSE=1 DESTDIR=%{buildroot} prefix=%{_prefix} app_prefix=%{_app_prefix} app_data=%{_app_data} projconfdir=%{_projconfdir} bindir=%{_app_bindir} uxbindir=%{_ux_bindir} symbindir=%{_symbindir} rundir=%{_app_rundir} app_logdir=%{_app_logdir} defaultsdir=%{_sysconfdir}/sysconfig unitdir=%{_unitdir} bash install.sh systemd_redhat
 
@@ -153,5 +157,7 @@ systemctl daemon-reload >/dev/null 2>&1 || :
 
 
 %changelog
+* Mon Sep 09 2019 WellerNET <dev@wellernet.ch> - 5.2.6-2
+- Modifications to match redhat file system layout
 * Thu Nov 01 2018 WellerNET <dev@wellernet.ch> - 5.2.6-1
 - Build for 5.2.6

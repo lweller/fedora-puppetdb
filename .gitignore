@@ -1,0 +1,4 @@
+puppetdb-*.tar.gz
+puppetdb-*.tar.gz.asc
+puppetdb-*.src.rpm
+puppetdb-*/

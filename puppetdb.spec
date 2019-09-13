@@ -41,13 +41,14 @@ BuildArch:        noarch
 
 BuildRequires:    ruby
 BuildRequires:    /usr/sbin/useradd
+BuildRequires:    systemd-devel
 
 # Required to get trustanchors for java
 BuildRequires:    ca-certificates
 
-Requires(post):   systemd
-Requires(preun):  systemd
-Requires(postun): systemd
+Requires(post):   systemd-units
+Requires(preun):  systemd-units
+Requires(postun): systemd-units
 
 Requires:         java-1.8.0-openjdk-headless
 Requires:         bash

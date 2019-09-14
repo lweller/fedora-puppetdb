@@ -68,7 +68,7 @@ Puppet-integrated catalog and fact storage
 
 %package termini
 Summary: Termini for puppetdb
-Requires: puppet-%{version}
+Requires: puppet >= 4.99.0
 Obsoletes: puppetdb-termini < %{version}
 Provides:  puppetdb-termini >= %{version}
 

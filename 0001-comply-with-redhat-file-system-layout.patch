@@ -1,12 +1,12 @@
-From 8c3ad579b317eed17159b9371a561887d4488ed8 Mon Sep 17 00:00:00 2001
+From e2add1d6eb134508995cbb52c9be3341f3af16f0 Mon Sep 17 00:00:00 2001
 From: Lucien Weller <lucien@wellernet.ch>
-Date: Tue, 10 Sep 2019 18:29:44 +0200
+Date: Mon, 16 Sep 2019 06:16:56 +0200
 Subject: [PATCH] comply with redhat file system layout
 
 ---
- Makefile                                      |  16 +-
+ Makefile                                      |  16 +--
  ext/bin/puppetdb                              |   4 +-
- ext/cli/config-migration                      |  22 +-
+ ext/cli/config-migration                      |  22 ++--
  ext/cli/foreground                            |   2 +-
  ext/cli/reload                                |   4 +-
  ext/cli/ssl-setup                             |   3 +-
@@ -18,8 +18,8 @@ Subject: [PATCH] comply with redhat file system layout
  ext/config/request-logging.xml                |   4 +-
  ext/default                                   |   6 +-
  ext/docs/puppetdb/api/query/curl.markdown     |   8 +-
- .../puppetdb/api/query/tutorial-pql.markdown  |  20 +-
- ext/docs/puppetdb/api/query/tutorial.markdown |  14 +-
+ .../puppetdb/api/query/tutorial-pql.markdown  |  20 ++--
+ ext/docs/puppetdb/api/query/tutorial.markdown |  14 +--
  ext/docs/puppetdb/api/query/v4/pql.markdown   |   6 +-
  .../puppetdb/api/query/v4/resources.markdown  |  10 +-
  ext/docs/puppetdb/configure.markdown          |   4 +-
@@ -34,9 +34,9 @@ Subject: [PATCH] comply with redhat file system layout
  ext/redhat/init                               |   6 +-
  ext/redhat/init.suse                          |   6 +-
  ext/redhat/puppetdb.service                   |   8 +-
- ext/redhat/puppetdb.spec                      | 201 ++++--------------
- install.sh                                    |  34 +--
- 32 files changed, 149 insertions(+), 279 deletions(-)
+ ext/redhat/puppetdb.spec                      | 109 +++---------------
+ install.sh                                    |  34 +++---
+ 32 files changed, 126 insertions(+), 210 deletions(-)
 
 diff --git a/Makefile b/Makefile
 index 801df2d..4ff3928 100644
@@ -66,7 +66,7 @@ index 801df2d..4ff3928 100644
  	install -d -m 0755 "$(DESTDIR)$(datadir)/puppetdb/cli/apps"
  	install -d -m 0755 "$(DESTDIR)$(bindir)"
 diff --git a/ext/bin/puppetdb b/ext/bin/puppetdb
-index 5a30639..8eb72f2 100644
+index 8b7584a..6f4a6cc 100644
 --- a/ext/bin/puppetdb
 +++ b/ext/bin/puppetdb
 @@ -13,8 +13,8 @@ elif [ `uname` == "OpenBSD" ] ; then
@@ -172,10 +172,10 @@ index 7eda7d9..9105f00 100644
  if [ ! -e "${INSTALL_DIR}/ezbake-functions.sh" ]; then
      echo "Unable to find ${INSTALL_DIR}/ezbake-functions.sh script, failing start." 1>&2
 diff --git a/ext/cli/ssl-setup b/ext/cli/ssl-setup
-index 902a00b..9a94312 100644
+index 7aaf6ab..2eeb595 100644
 --- a/ext/cli/ssl-setup
 +++ b/ext/cli/ssl-setup
-@@ -225,13 +225,12 @@ then
+@@ -232,13 +232,12 @@ then
    done
  else
    # This should be run on the host with PuppetDB
@@ -296,10 +296,10 @@ index a8301fb..5ba6e13 100644
              <maxFileSize>200MB</maxFileSize>
              <maxHistory>90</maxHistory>
 diff --git a/ext/default b/ext/default
-index 90c6f21..5d48faf 100644
+index d1dc28f..f1eb886 100644
 --- a/ext/default
 +++ b/ext/default
-@@ -14,11 +14,11 @@ TK_ARGS=""
+@@ -17,11 +17,11 @@ TK_ARGS=""
  # These normally shouldn't need to be edited if using OS packages
  USER="puppetdb"
  GROUP="puppetdb"
@@ -315,10 +315,10 @@ index 90c6f21..5d48faf 100644
  # SERVICE_STOP_RETRIES can be set here to alter the default stop timeout in
  # seconds.  For systemd, the shorter of this setting or 'TimeoutStopSec' in
 diff --git a/ext/docs/puppetdb/api/query/curl.markdown b/ext/docs/puppetdb/api/query/curl.markdown
-index 0fad023..5dc0318 100644
+index d14afc0..a650a24 100644
 --- a/ext/docs/puppetdb/api/query/curl.markdown
 +++ b/ext/docs/puppetdb/api/query/curl.markdown
-@@ -43,9 +43,9 @@ make sure to authorize the certificate you are using:
+@@ -45,9 +45,9 @@ make sure to authorize the certificate you are using:
  > ```
  > curl 'https://<your.puppetdb.server>:8081/pdb/query/v4/nodes' \
  >   --tlsv1 \
@@ -331,7 +331,7 @@ index 0fad023..5dc0318 100644
  > ```
  
  ### Using an RBAC token (PE only)
-@@ -68,7 +68,7 @@ depending on the operation.
+@@ -70,7 +70,7 @@ depending on the operation.
      curl 'https://<your.puppetdb.server>:8081/pdb/query/v4/nodes' \
        -H "X-Authentication: <token contents>" \
        --tlsv1 \
@@ -341,13 +341,13 @@ index 0fad023..5dc0318 100644
  **Note:** PE 2016.2 users will need to set `client-auth = want` under the
  `[jetty]` header of their jetty.ini configuration. Later versions of PE have
 diff --git a/ext/docs/puppetdb/api/query/tutorial-pql.markdown b/ext/docs/puppetdb/api/query/tutorial-pql.markdown
-index 3a99ff8..3756cee 100644
+index 9c5d87b..42ce04a 100644
 --- a/ext/docs/puppetdb/api/query/tutorial-pql.markdown
 +++ b/ext/docs/puppetdb/api/query/tutorial-pql.markdown
 @@ -51,9 +51,9 @@ only accept unencrypted traffic from `localhost`.
  
      puppet query '<PQL query>' \
-       --urls https://puppetdb.example.com:8081/pdb/query/v4 \
+       --urls https://puppetdb.example.com:8081 \
 -      --cacert /etc/puppetlabs/puppet/ssl/certs/ca.pem \
 -      --cert /etc/puppetlabs/puppet/ssl/certs/thisnode.pem \
 -      --key /etc/puppetlabs/puppet/ssl/private_keys/thisnode.pem
@@ -404,7 +404,7 @@ index 3a99ff8..3756cee 100644
  Another thing to note is the way we have grouped `file` and `line`. This
  grouping enforces the `!` operator to act on both parameter filters.
 diff --git a/ext/docs/puppetdb/api/query/tutorial.markdown b/ext/docs/puppetdb/api/query/tutorial.markdown
-index ef150bd..b5dbc1f 100644
+index b5ac78f..a181bc0 100644
 --- a/ext/docs/puppetdb/api/query/tutorial.markdown
 +++ b/ext/docs/puppetdb/api/query/tutorial.markdown
 @@ -41,9 +41,9 @@ This requires that PuppetDB be [configured to accept non-SSL connections][config
@@ -454,13 +454,13 @@ index ef150bd..b5dbc1f 100644
  ### Resource attributes
  
 diff --git a/ext/docs/puppetdb/api/query/v4/pql.markdown b/ext/docs/puppetdb/api/query/v4/pql.markdown
-index 1599d8e..f813610 100644
+index 11c794b..b7447f2 100644
 --- a/ext/docs/puppetdb/api/query/v4/pql.markdown
 +++ b/ext/docs/puppetdb/api/query/v4/pql.markdown
 @@ -41,9 +41,9 @@ only accept unencrypted traffic from `localhost`.
  
      puppet query 'nodes { certname = "macbook-pro.local" }' \
-       --urls https://puppetdb.example.com:8081/pdb/query/v4 \
+       --urls https://puppetdb.example.com:8081 \
 -      --cacert /etc/puppetlabs/puppet/ssl/certs/ca.pem \
 -      --cert /etc/puppetlabs/puppet/ssl/certs/thisnode.pem \
 -      --key /etc/puppetlabs/puppet/ssl/private_keys/thisnode.pem
@@ -520,7 +520,7 @@ index bc4cf1b..4e28834 100644
        "environment": "production",
        "tags" : [ "foo", "bar" ],
 diff --git a/ext/docs/puppetdb/configure.markdown b/ext/docs/puppetdb/configure.markdown
-index 4d6aa3b..8d0cbe5 100644
+index 0cf8775..025bacb 100644
 --- a/ext/docs/puppetdb/configure.markdown
 +++ b/ext/docs/puppetdb/configure.markdown
 @@ -101,7 +101,7 @@ files in alphabetical order.
@@ -542,7 +542,7 @@ index 4d6aa3b..8d0cbe5 100644
  directory of the source.
  
 diff --git a/ext/docs/puppetdb/connect_puppet_master.markdown b/ext/docs/puppetdb/connect_puppet_master.markdown
-index bb5bc14..eed6542 100644
+index 233fb2c..0393be7 100644
 --- a/ext/docs/puppetdb/connect_puppet_master.markdown
 +++ b/ext/docs/puppetdb/connect_puppet_master.markdown
 @@ -50,7 +50,7 @@ If your Puppet master isn't running Puppet from a supported package, you will ne
@@ -568,10 +568,10 @@ index 7c746b9..2e4a13f 100644
    need to [run the SSL config script and edit the config file][ssl_script]
    before a puppet master can contact PuppetDB.
 diff --git a/ext/docs/puppetdb/pdb_client_tools.markdown b/ext/docs/puppetdb/pdb_client_tools.markdown
-index 931bae8..a9eb263 100644
+index d6f5f3b..39daf5c 100644
 --- a/ext/docs/puppetdb/pdb_client_tools.markdown
 +++ b/ext/docs/puppetdb/pdb_client_tools.markdown
-@@ -73,7 +73,7 @@ take the following settings:
+@@ -74,7 +74,7 @@ take the following settings:
  
  - `cacert` The path for the CA cert.
  
@@ -580,7 +580,7 @@ index 931bae8..a9eb263 100644
  
    Windows - C:\ProgramData\PuppetLabs\puppet\etc\ssl\certs\ca.pem
  
-@@ -99,7 +99,7 @@ certificate authentication takes precendence over token authentication).
+@@ -100,7 +100,7 @@ certificate authentication takes precendence over token authentication).
  {
    "puppetdb": {
      "server_urls": "https://<PUPPETDB_HOST>:8081",
@@ -589,7 +589,7 @@ index 931bae8..a9eb263 100644
    }
  }
  ```
-@@ -125,9 +125,9 @@ for SSL connections to PuppetDB. To configure certificate authentication set
+@@ -126,9 +126,9 @@ for SSL connections to PuppetDB. To configure certificate authentication set
  {
    "puppetdb": {
      "server_urls": "https://<PUPPETDB_HOST>:8081",
@@ -603,7 +603,7 @@ index 931bae8..a9eb263 100644
  }
  ```
 diff --git a/ext/docs/puppetdb/postgres_ssl.markdown b/ext/docs/puppetdb/postgres_ssl.markdown
-index 031cbbe..38e3121 100644
+index 330e5f5..ae02535 100644
 --- a/ext/docs/puppetdb/postgres_ssl.markdown
 +++ b/ext/docs/puppetdb/postgres_ssl.markdown
 @@ -52,7 +52,7 @@ Next, create a TrustStore containing your Puppet CA certificate. If you have bee
@@ -615,7 +615,7 @@ index 031cbbe..38e3121 100644
  
  *Note:* Replace `<PASSWORD>` with the password you used to create the KeyStore, or the one found in `/etc/puppetdb/ssl/puppetdb_keystore_pw.txt`.
  
-@@ -76,7 +76,7 @@ Once this is done, modify the JDBC URL in the database configuration section for
+@@ -76,7 +76,7 @@ After this is done, modify the JDBC URL in the database configuration section fo
      [database]
      classname = org.postgresql.Driver
      subprotocol = postgresql
@@ -625,10 +625,10 @@ index 031cbbe..38e3121 100644
      password = <PASSWORD>
  
 diff --git a/ext/docs/puppetdb/release_notes.markdown b/ext/docs/puppetdb/release_notes.markdown
-index cb9a0a3..e193525 100644
+index ebc9544..326a160 100644
 --- a/ext/docs/puppetdb/release_notes.markdown
 +++ b/ext/docs/puppetdb/release_notes.markdown
-@@ -1017,7 +1017,7 @@ Russell Mull, Ryan Senior, Wyatt Alt
+@@ -1078,7 +1078,7 @@ Russell Mull, Ryan Senior, Wyatt Alt
    For those who don't use the PuppetDB module and are still on PuppetDB 2.3.x,
    this means the following paths have changed:
  
@@ -637,7 +637,7 @@ index cb9a0a3..e193525 100644
      * Logs: /var/log/puppetdb is now /var/log/puppetlabs/puppetdb
      * Binaries: /usr/bin is now /opt/puppetlabs/bin
      * Data: /var/lib/puppetdb is now /opt/puppetlabs/server/data/puppetdb
-@@ -1281,7 +1281,7 @@ queries, and reduces the size of anonymized export tarballs.
+@@ -1342,7 +1342,7 @@ queries, and reduces the size of anonymized export tarballs.
  ### Security
  
  * Fix permissions on the PuppetDB configuration directory
@@ -646,7 +646,7 @@ index cb9a0a3..e193525 100644
    local users were able to read any PuppetDB configuration file. This includes
    the `database.ini` configuration file, which, depending on your configuration,
    may include a database password. This issue does not affect users of the
-@@ -1643,7 +1643,7 @@ Wayne Warren, and Wyatt Alt.
+@@ -1704,7 +1704,7 @@ Wayne Warren, and Wyatt Alt.
    For those who don't use the PuppetDB module, this means the
    following paths have changed:
  
@@ -738,16 +738,19 @@ index 2adee56..5cb5010 100644
      # to access the present working directory.
      cd "${INSTALL_DIR}"
 diff --git a/ext/redhat/puppetdb.service b/ext/redhat/puppetdb.service
-index ff99a0b..0eafdc1 100644
+index 71e685a..9f0f2e0 100644
 --- a/ext/redhat/puppetdb.service
 +++ b/ext/redhat/puppetdb.service
-@@ -20,14 +20,14 @@ TimeoutStartSec=14400
+@@ -20,7 +20,7 @@ TimeoutStartSec=14400
  TimeoutStopSec=60
  Restart=on-failure
  StartLimitBurst=5
 -PIDFile=/var/run/puppetlabs/puppetdb/puppetdb.pid
 +PIDFile=/var/run/puppetdb/puppetdb.pid
- #set default privileges to -rw-r-----
+ 
+ # https://tickets.puppetlabs.com/browse/EZ-129
+ # Prior to systemd v228, TasksMax was unset by default, and unlimited. Starting in 228 a default of '512'
+@@ -34,9 +34,9 @@ TasksMax=4915
  UMask=027
  
  
@@ -761,101 +764,37 @@ index ff99a0b..0eafdc1 100644
  KillMode=process
  
 diff --git a/ext/redhat/puppetdb.spec b/ext/redhat/puppetdb.spec
-index aec37e3..61a0eed 100644
+index 6a5cfe4..14a2c19 100644
 --- a/ext/redhat/puppetdb.spec
 +++ b/ext/redhat/puppetdb.spec
-@@ -1,75 +1,30 @@
--%global realname puppetdb
--%global realversion 5.2.6
--%global rpmversion 5.2.6
--
+@@ -3,7 +3,7 @@
+ %global rpmversion 5.2.9
+ 
  # Application bin dir.
 -%global _app_bindir /opt/puppetlabs/server/apps/puppetdb/bin
--# Bin dir where convenience symlinks go.
--%global _sym_bindir /opt/puppetlabs/server/bin
 +%global _app_bindir /usr/share/puppetdb/bin
+ # Bin dir where convenience symlinks go.
+ %global _sym_bindir /opt/puppetlabs/server/bin
  # Bin dir the end user adds to their PATH
--%global _ux_bindir /opt/puppetlabs/bin
-+%global _ux_bindir /usr/bin
- # Log directory
--%global _app_logdir /var/log/puppetlabs/puppetdb
-+%global _app_logdir /var/log/puppetdb
- # Run directory, PID files go here
--%global _app_rundir /var/run/puppetlabs/puppetdb
-+%global _app_rundir /var/run/puppetdb
+@@ -15,7 +15,7 @@
  
  # Puppet Installation Layout
--# https://github.com/puppetlabs/puppet-specifications/blob/af82509/file_paths.md
+ # https://github.com/puppetlabs/puppet-specifications/blob/af82509/file_paths.md
 -%global _app_prefix /opt/puppetlabs/server/apps/puppetdb
--%global _app_data /opt/puppetlabs/server/data/puppetdb
--%global _projconfdir /etc/puppetlabs/puppetdb
--
--%global rubylibdir        /opt/puppetlabs/puppet/lib/ruby/vendor_ruby
--
--%global _with_systemd  0
--%global _with_sysvinit 0
--%global _systemd_el    0
--%global _systemd_sles  0
--%global _old_el        0
--%global _old_sles      0
--%global _sles          0
--%global _certs_package  ca-certificates
--
--%if 0%{?fedora} >= 18 || 0%{?rhel} >= 7
--%global _with_systemd 1
--%global _systemd_el   1
--%endif
--
--%if 0%{?suse_version}   >= 1210
--%global _with_systemd   1
--%global _systemd_sles   1
--%global _sles           1
--%global _certs_package  ca-certificates-mozilla
--%endif
--
--%if 0%{?rhel} && 0%{?rhel} < 7
--%global _with_sysvinit 1
--%global _old_el        1
--%endif
--
--%if 0%{?suse_version} && 0%{?suse_version} < 1210
--%global _with_sysvinit 1
--%global _old_sles      1
--%endif
--
--# java 1.8.0 is available starting in fedora 20, el 6 and sles-12sp1
--%if 0%{?suse_version}   >= 1210
--%global open_jdk          java-1_8_0-openjdk-headless
--%else
--%global open_jdk          java-1.8.0-openjdk-headless
--%endif
-+%global _sysconfdir /etc
 +%global _app_prefix /usr/share/puppetdb
-+%global _app_data /var/lib/puppetdb
-+%global _projconfdir %{_sysconfdir}/puppetdb
-+%global _symbindir /dev/null
-+
-+%global rubylibdir        /usr/share/ruby/vendor_ruby
+ %global _app_data /opt/puppetlabs/server/data/puppetdb
+ %global _projconfdir /etc/puppetlabs/puppetdb
+ 
+@@ -61,7 +61,7 @@
  
  # Use the alternate locations for things.
--%global _sysconfdir      /etc
+ %global _sysconfdir      /etc
 -%global _prefix          /opt/puppetlabs/server/apps/puppetdb
 +%global _prefix          /usr/share/puppetdb
  %global _rundir          /var/run
--
--%define __jar_repack     0
-+%global _unitdir         /usr/lib/systemd/system
-+%global _tmpfilesdir     /usr/lib/tmpfiles.d
  
- Name:             puppetdb
- Version:          5.2.6
--Release:          1%{?dist}
--BuildRoot:        %{_tmppath}/%{realname}-%{version}-%{release}-root-%(%{__id_u} -n)
-+Release:          2%{?dist}
- 
- Summary:          Puppet Labs - puppetdb
- Vendor:           Puppet Labs <info@puppetlabs.com>
-@@ -77,47 +32,26 @@ Vendor:           Puppet Labs <info@puppetlabs.com>
+ %define __jar_repack     0
+@@ -77,47 +77,26 @@ Vendor:           Puppet Labs <info@puppetlabs.com>
  License:          ASL 2.0
  
  URL:              http://puppetlabs.com
@@ -897,11 +836,11 @@ index aec37e3..61a0eed 100644
  Requires(preun):  systemd
  Requires(postun): systemd
 -%endif
--
+ 
 -%if %{_systemd_sles}
 -%{?systemd_requires}
 -%endif
- 
+-
 -
 -Requires:         %{open_jdk}
 +Requires:         java-1.8.0-openjdk-headless
@@ -910,42 +849,7 @@ index aec37e3..61a0eed 100644
  # net-tools is required for netstat usage in service unit file
  # See: https://tickets.puppetlabs.com/browse/SERVER-338
  Requires:         net-tools
-@@ -126,26 +60,23 @@ Requires:         /usr/bin/which
- # procps is required for pgrep, used in several of the init scripts
- Requires:         procps
- 
--
--Requires:         puppet-agent >= 4.99.0
--
-+Requires:         puppet >= 4.99.0
- 
- %description
--Puppet-integrated catalog and fact storage (puppetlabs/puppetdb 5.2.6,puppetlabs/trapperkeeper-webserver-jetty9 2.2.0,com.fasterxml.jackson.core/jackson-databind 2.9.7,org.clojure/clojure 1.8.0,org.clojure/core.async 0.2.391,org.clojure/core.match 0.3.0-alpha4,org.clojure/core.memoize 0.5.9,org.clojure/java.jdbc 0.6.2-alpha3,org.clojure/tools.macro 0.1.5,org.clojure/math.combinatorics 0.1.1,org.clojure/math.numeric-tower 0.0.4,org.clojure/tools.logging 0.3.1,puppetlabs/comidi 0.3.1,puppetlabs/dujour-version-check 0.2.1,puppetlabs/http-client 0.9.0,puppetlabs/i18n 0.8.0,puppetlabs/kitchensink 2.5.1,puppetlabs/stockpile 0.0.4,puppetlabs/tools.namespace 0.2.4.1,puppetlabs/trapperkeeper 1.5.3,puppetlabs/trapperkeeper-metrics 1.1.0,puppetlabs/trapperkeeper-status 0.7.1,cheshire/cheshire 5.8.0,clj-stacktrace/clj-stacktrace 0.2.8,clj-time/clj-time 0.11.0,com.rpl/specter 0.5.7,com.taoensso/nippy 2.10.0,digest/digest 1.4.3,fast-zip-visit/fast-zip-visit 1.0.2,instaparse/instaparse 1.4.1,me.raynes/fs 1.4.6,metrics-clojure/metrics-clojure 2.6.1,prismatic/schema 1.1.2,robert/hooke 1.3.0,slingshot/slingshot 0.12.2,trptcolin/versioneer 0.2.0,org.apache.commons/commons-lang3 3.4,overtone/at-at 1.2.0,com.zaxxer/HikariCP 2.6.1,honeysql/honeysql 0.6.3,org.postgresql/postgresql 9.4.1208.jre7,org.apache.activemq/activemq-broker 5.13.2,org.apache.activemq/activemq-kahadb-store 5.13.2,org.apache.activemq/activemq-pool 5.13.2,org.slf4j/jcl-over-slf4j 1.7.14,bidi/bidi 2.0.12,clj-http/clj-http 2.0.1,com.novemberain/pantomime 2.1.0,compojure/compojure 1.5.0,org.apache.commons/commons-compress 1.10,ring/ring-core 1.4.0,puppetlabs/puppetdb 5.2.6)
-+Puppet-integrated catalog and fact storage
-+
- %package termini
--Group: Development/Libraries
- Summary: Termini for puppetdb
--Requires: puppet-agent
--Obsoletes: puppetdb-terminus < 5.2.6
--Provides:  puppetdb-terminus >= 5.2.6
-+Requires: puppet-%{version}
-+Obsoletes: puppetdb-termini < %{version}
-+Provides:  puppetdb-termini >= %{version}
- 
- %description termini
- Termini for puppetdb
--Contains terminus for:
--  puppetdb (version 5.2.6)
- 
- %prep
--%setup -q -n %{name}-%{realversion}
-+%setup 
-+%patch0 -p1
- 
- %build
- 
-@@ -153,17 +84,9 @@ Contains terminus for:
+@@ -153,17 +132,9 @@ Contains terminus for:
  
  rm -rf $RPM_BUILD_ROOT
  
@@ -965,7 +869,7 @@ index aec37e3..61a0eed 100644
  
  env EZ_VERBOSE=1 DESTDIR=%{buildroot} rubylibdir=%{rubylibdir} prefix=%{_prefix} bash install.sh termini
  
-@@ -188,81 +111,27 @@ fi
+@@ -188,81 +159,27 @@ fi
  if rpm -q puppetdb | grep ^puppetdb-2.* > /dev/null && [ $1 -eq 2 ] ; then tar -czf /tmp/puppetdb-upgrade-config-files.tgz -C /etc/puppetdb/conf.d config.ini database.ini jetty.ini ; fi
  
  %post
@@ -1048,17 +952,8 @@ index aec37e3..61a0eed 100644
  %{_ux_bindir}/puppetdb
  %attr(-, puppetdb, puppetdb) %{_app_data}
  %dir %attr(0755, puppetdb, puppetdb) %{_app_rundir}
-@@ -288,5 +157,7 @@ fi
- 
- 
- %changelog
--* Tue Oct 23 2018 Puppet Labs Release <info@puppetlabs.com> -  5.2.6-1
-+* Mon Sep 09 2019 WellerNET <dev@wellernet.ch> - 5.2.6-2
-+- Modifications to match redhat file system layout
-+* Thu Nov 01 2018 WellerNET <dev@wellernet.ch> - 5.2.6-1
- - Build for 5.2.6
 diff --git a/install.sh b/install.sh
-index 1695776..794bdca 100644
+index 8f84459..22ea20a 100644
 --- a/install.sh
 +++ b/install.sh
 @@ -19,18 +19,18 @@ datadir=${datadir:=${prefix}/share}
@@ -1103,8 +998,8 @@ index 1695776..794bdca 100644
      #
      # This also allows us to prefer PE ruby over system ruby, so this will work
      # with PE as well
--    local rubylibdir=${rubylibdir:=$(/opt/puppetlabs/puppet/bin/ruby -rrbconfig -e "puts RbConfig::CONFIG['vendordir']")}
-+    local rubylibdir=${rubylibdir:=$(/usr/bin/ruby -rrbconfig -e "puts RbConfig::CONFIG['vendordir']")}
+-    local rubylibdir=${rubylibdir:=/opt/puppetlabs/puppet/lib/ruby/vendor_ruby}
++    local rubylibdir=${rubylibdir:=/usr/share/ruby/vendor_ruby}
      install -Dm 0644 puppet/face/node/deactivate.rb "${DESTDIR}${rubylibdir}/puppet/face/node/deactivate.rb"
      install -Dm 0644 puppet/face/node/status.rb "${DESTDIR}${rubylibdir}/puppet/face/node/status.rb"
      install -Dm 0644 puppet/functions/puppetdb_query.rb "${DESTDIR}${rubylibdir}/puppet/functions/puppetdb_query.rb"

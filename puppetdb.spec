@@ -23,8 +23,8 @@
 %global _tmpfilesdir     /usr/lib/tmpfiles.d
 
 Name:             puppetdb
-Version:          5.2.6
-Release:          2%{?dist}
+Version:          5.2.9
+Release:          1%{?dist}
 
 Summary:          Puppet Labs - puppetdb
 Vendor:           Puppet Labs <info@puppetlabs.com>
@@ -61,14 +61,14 @@ Requires:         /usr/bin/which
 # procps is required for pgrep, used in several of the init scripts
 Requires:         procps
 
-Requires:         puppet >= 4.99.0
+Requires:         puppet > 4.99.0
 
 %description
 Puppet-integrated catalog and fact storage
 
 %package termini
 Summary: Termini for puppetdb
-Requires: puppet >= 4.99.0
+Requires: puppet > 4.99.0
 Obsoletes: puppetdb-termini < %{version}
 Provides:  puppetdb-termini >= %{version}
 
@@ -158,6 +158,8 @@ systemctl daemon-reload >/dev/null 2>&1 || :
 
 
 %changelog
+* Mon Sep 16 2019 WellerNET <<dev@wellernet.ch> - 5.2.9-1
+- Upgraded to version 5.2.9
 * Mon Sep 09 2019 WellerNET <dev@wellernet.ch> - 5.2.6-2
 - Modifications to match redhat file system layout
 * Thu Nov 01 2018 WellerNET <dev@wellernet.ch> - 5.2.6-1
